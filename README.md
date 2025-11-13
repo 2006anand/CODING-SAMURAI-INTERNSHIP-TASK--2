@@ -1,70 +1,74 @@
-# CODING-SAMURAI-INTERNSHIP-TASK--2
-#Project Assigned by coding samurai group  during Machine Learning internship period
-<!-- To Bring back the link to top--> 
-<a name="readme-top"></a>
+import pandas as pd
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+import joblib
+import warnings
 
-# 🌷 Iris Classification 
+warnings.filterwarnings('ignore')
 
+df = sns.load_dataset('iris')
 
+print("Dataset Shape:", df.shape)
+print(df.head())
 
-<!-- MARKDOWN LINKS & IMAGES -->
-<!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
+plt.figure(figsize=(8,6))
+sns.pairplot(df, hue='species', corner=True)
+plt.show()
 
+corr = df.drop('species', axis=1).corr()
+plt.figure(figsize=(6,5))
+sns.heatmap(corr, annot=True)
+plt.show()
 
-<!-- TABLE OF CONTENTS -->
-<details>
-  <summary>Table of Contents</summary>
-  <ol>
-    <li>
-      <a href="#about-the-project-">About The Project</a>
-      <ul>
-        <li><a href="#project-workflow-">Project Workflow</a></li>
-        <li><a href="#built-with-%EF%B8%8F">Built With</a></li>
-      </ul>
-    </li>
-    <li>
-      <a href="#getting-started-">Getting Started</a>
-      <ul>
-        <li><a href="#prerequisites-">Prerequisites</a></li>
-        <li><a href="#installation-">Installation</a></li>
-      </ul>
-    </li>
-    <li><a href="#usage-">Usage</a></li>
-    <li><a href="#contributing-">Contributing</a></li>
-    <li><a href="#license-">License</a></li>
-    <li><a href="#acknowledgements-">Acknowledgments</a></li>
-    <li><a href="#contact-%EF%B8%8F">Contact</a></li>
-  </ol>
-</details>
+X = df.drop('species', axis=1)
+y = df['species']
 
-<!-- About the project-->
-## About the Project 💻
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42, stratify=y
+)
 
-[![Iris_Classification_Product_Screenshot](assets/output2.jpg)](https://irisclassifier.streamlit.app/)
+print("Training Shape:", X_train.shape)
+print("Testing Shape:", X_test.shape)
 
-The Iris Classification Machine Learning Project is a thorough investigation of multi-modal machine learning methods used to classify iris blossoms into several species according to their morphological traits. This project includes the collection of data, data preprocessing, feature scaling, model training, model assessment, and finally the creation and implementation of an intuitive interface using Streamlit.
+model = RandomForestClassifier(n_estimators=100, random_state=42)
+model.fit(X_train, y_train)
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+y_pred = model.predict(X_test)
 
+acc = accuracy_score(y_test, y_pred)
+print("Accuracy:", acc)
 
-<!--Built with Section--> 
-## Project Workflow 📚
+cm = confusion_matrix(y_test, y_pred, labels=model.classes_)
+print("Confusion Matrix:\n", cm)
 
-The project follows a structured workflow:
+print("Classification Report:\n", classification_report(y_test, y_pred))
 
-1) **Data Gathering:** Collecting the iris dataset, which includes measurements of sepal length, sepal width, petal length, petal width, and corresponding species labels.
+plt.figure(figsize=(6,4))
+sns.heatmap(cm, annot=True, fmt='d', xticklabels=model.classes_, yticklabels=model.classes_)
+plt.xlabel("Predicted")
+plt.ylabel("Actual")
+plt.title("Confusion Matrix Heatmap")
+plt.show()
 
-2) **Data Preprocessing:** Cleaning and preparing the data for training, including handling missing values, encoding categorical variables, and splitting into training and testing sets.
+scores = cross_val_score(model, X, y, cv=5)
+print("Cross-Validation Scores:", scores)
+print("Mean CV Accuracy:", np.round(scores.mean(), 4))
 
-3) **Feature Scaling:** Scaling the features to ensure that they have a consistent influence on the machine learning model.
+joblib.dump(model, "iris_random_forest.joblib")
+print("Model saved as iris_random_forest.joblib")
 
-4) **Model Training:** Choosing a machine learning algorithm and training the model using the preprocessed data.
+sample_df = pd.DataFrame(
+    [[5.1, 3.5, 1.4, 0.2],
+     [6.7, 3.0, 5.2, 2.3]],
+    columns=['sepal_length', 'sepal_width', 'petal_length', 'petal_width']
+)
 
-5) **Model Evaluation:** Assessing the model's performance using various metrics such as accuracy, precision, recall, and F1-score to gauge its effectiveness in classifying iris species.
+preds = model.predict(sample_df)
+print("Sample Predictions:", preds)
 
-6) **Model Building and Deployment:** Developing a user-friendly Streamlit application to interact with the trained model. Users can input iris measurements and receive predictions on the species of the flower.
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
-
+loaded = joblib.load("iris_random_forest.joblib")
+print("Loaded Model Prediction:", loaded.predict(X_test.iloc[:5]))
